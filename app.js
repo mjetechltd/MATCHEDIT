@@ -523,7 +523,7 @@ const CAMERAS = [
 
 // ── State ──
 const state = {
-  hero: { cameraId: 'alexa35', profileIdx: 0, isoIdx: 2 },
+  hero: { cameraId: 'alexa35', profileIdx: 0, baseIsoIdx: 2, ei: null },
   comparisons: []
 };
 let compIdCounter = 0;
@@ -533,6 +533,7 @@ const $ = s => document.querySelector(s);
 const heroSel = $('#hero-camera');
 const heroProf = $('#hero-profile');
 const heroISO = $('#hero-iso');
+const heroEI = $('#hero-ei');
 const heroInfo = $('#hero-info');
 const compList = $('#comp-list');
 const addBtn = $('#add-comp-btn');
@@ -546,6 +547,65 @@ const resultsEmpty = $('#results-empty');
 // ── Helpers ──
 function getCam(id) { return CAMERAS.find(c => c.id === id); }
 function getProfile(cam, idx) { return cam.profiles[idx] || cam.profiles[0]; }
+
+// Generate EI range around a base ISO (standard 1-stop steps)
+function generateEIRange(baseISO) {
+  const range = [];
+  // Go 3 stops below and 4 stops above base (or clamp to 25-51200)
+  for (let shift = -3; shift <= 4; shift++) {
+    const ei = Math.round(baseISO * Math.pow(2, shift));
+    if (ei >= 25 && ei <= 51200) range.push(ei);
+  }
+  return range;
+}
+
+// Calculate DR split at a given EI vs. base ISO
+// Lower EI = overexpose = more shadow detail, less highlight headroom
+// Higher EI = underexpose = more highlight headroom, less shadow detail
+function getDRAtEI(dr, baseISO, ei) {
+  if (!dr || !dr.total) return { total: 0, above: 0, below: 0 };
+  const shift = Math.log2((ei || baseISO) / baseISO);
+  const above = Math.max(0, (dr.above || dr.total / 2) + shift);
+  const below = Math.max(0, (dr.below || dr.total / 2) - shift);
+  return { total: dr.total, above: +above.toFixed(1), below: +below.toFixed(1) };
+}
+
+// Get the effective base ISO and EI for a state entry
+function getBaseAndEI(entry, prof) {
+  const baseISO = prof.baseISOs[entry.baseIsoIdx] || prof.baseISOs[0];
+  const ei = entry.ei || baseISO;
+  return { baseISO, ei };
+}
+
+// Build DR bar HTML
+function drBarHTML(drAtEI) {
+  if (!drAtEI || !drAtEI.total) return '';
+  const abovePct = (drAtEI.above / drAtEI.total) * 100;
+  const belowPct = (drAtEI.below / drAtEI.total) * 100;
+  return `<div class="dr-bar-wrapper">
+    <div class="dr-bar-label-row">
+      <span class="dr-label-above">▲ ${drAtEI.above} stops above</span>
+      <span class="dr-label-total">${drAtEI.total} stops total</span>
+      <span class="dr-label-below">▼ ${drAtEI.below} stops below</span>
+    </div>
+    <div class="dr-bar">
+      <div class="dr-bar-above" style="width:${abovePct}%"><span>${drAtEI.above}</span></div>
+      <div class="dr-bar-mid"></div>
+      <div class="dr-bar-below" style="width:${belowPct}%"><span>${drAtEI.below}</span></div>
+    </div>
+  </div>`;
+}
+
+function miniDrBarHTML(drAtEI) {
+  if (!drAtEI || !drAtEI.total) return '';
+  const abovePct = (drAtEI.above / drAtEI.total) * 100;
+  const belowPct = (drAtEI.below / drAtEI.total) * 100;
+  return `<div class="dr-bar-mini">
+    <div class="dr-bar-above" style="width:${abovePct}%"></div>
+    <div class="dr-bar-mid"></div>
+    <div class="dr-bar-below" style="width:${belowPct}%"></div>
+  </div>`;
+}
 
 function stopDiff(heroGrey, compGrey) {
   return Math.log2(compGrey / heroGrey);
@@ -619,27 +679,45 @@ function populateHeroISO() {
   prof.baseISOs.forEach((iso, i) => {
     const o = document.createElement('option');
     o.value = i; o.textContent = 'ISO ' + iso;
-    if (i === state.hero.isoIdx) o.selected = true;
+    if (i === state.hero.baseIsoIdx) o.selected = true;
     heroISO.appendChild(o);
   });
+  populateHeroEI();
+}
+
+function populateHeroEI() {
+  const cam = getCam(state.hero.cameraId);
+  const prof = getProfile(cam, state.hero.profileIdx);
+  const baseISO = prof.baseISOs[state.hero.baseIsoIdx] || prof.baseISOs[0];
+  const eiRange = generateEIRange(baseISO);
+  heroEI.innerHTML = '';
+  eiRange.forEach(ei => {
+    const o = document.createElement('option');
+    o.value = ei;
+    o.textContent = 'EI ' + ei + (ei === baseISO ? ' (base)' : '');
+    if ((state.hero.ei || baseISO) === ei) o.selected = true;
+    heroEI.appendChild(o);
+  });
+  if (!state.hero.ei) state.hero.ei = baseISO;
   updateHeroInfo();
 }
 
 function updateHeroInfo() {
   const cam = getCam(state.hero.cameraId);
   const prof = getProfile(cam, state.hero.profileIdx);
-  const iso = prof.baseISOs[state.hero.isoIdx] || prof.baseISOs[0];
-  const dr = prof.dr;
-  let drText = dr.total ? dr.total + ' stops' : 'N/A';
-  let splitText = (dr.above && dr.below) ? `${dr.above} above / ${dr.below} below 18%` : 'Not published';
+  const { baseISO, ei } = getBaseAndEI(state.hero, prof);
+  const drAtEI = getDRAtEI(prof.dr, baseISO, ei);
+  const eiShift = Math.log2(ei / baseISO);
+  const eiShiftStr = eiShift === 0 ? '(at base)' : (eiShift > 0 ? `(+${eiShift.toFixed(1)} stops)` : `(${eiShift.toFixed(1)} stops)`);
   heroInfo.innerHTML = `
     <div class="info-row"><span class="info-label">Brand</span><span class="info-value">${cam.brand}</span></div>
     <div class="info-row"><span class="info-label">Segment</span><span class="info-value">${cam.segment}</span></div>
     <div class="info-row"><span class="info-label">Profile</span><span class="info-value">${prof.name}</span></div>
     <div class="info-row"><span class="info-label">Middle Grey</span><span class="info-value ire">${prof.middleGrey}% IRE</span></div>
-    <div class="info-row"><span class="info-label">Base ISO</span><span class="info-value">${iso}</span></div>
-    <div class="info-row"><span class="info-label">Dynamic Range</span><span class="info-value">${drText}</span></div>
-    <div class="info-row"><span class="info-label">DR Split</span><span class="info-value">${splitText}</span></div>
+    <div class="info-row"><span class="info-label">Base ISO</span><span class="info-value">${baseISO}</span></div>
+    <div class="info-row"><span class="info-label">Exposure Index</span><span class="info-value">EI ${ei} ${eiShiftStr}</span></div>
+    <div class="info-row"><span class="info-label">Dynamic Range</span><span class="info-value">${drAtEI.total} stops</span></div>
+    <div class="info-row"><span class="info-label">DR Split</span><span class="info-value">${drAtEI.above} above / ${drAtEI.below} below 18%</span></div>
     <div class="info-row"><span class="info-label">Notes</span><span class="info-value" style="font-size:0.72rem;font-family:var(--font-sans);font-weight:400;color:var(--text-secondary);max-width:180px;text-align:right">${prof.notes}</span></div>
   `;
   render();
@@ -650,16 +728,23 @@ function updateHeroInfo() {
 heroSel.addEventListener('change', () => {
   state.hero.cameraId = heroSel.value;
   state.hero.profileIdx = 0;
-  state.hero.isoIdx = 0;
+  state.hero.baseIsoIdx = 0;
+  state.hero.ei = null;
   populateHeroProfiles();
 });
 heroProf.addEventListener('change', () => {
   state.hero.profileIdx = parseInt(heroProf.value);
-  state.hero.isoIdx = 0;
+  state.hero.baseIsoIdx = 0;
+  state.hero.ei = null;
   populateHeroISO();
 });
 heroISO.addEventListener('change', () => {
-  state.hero.isoIdx = parseInt(heroISO.value);
+  state.hero.baseIsoIdx = parseInt(heroISO.value);
+  state.hero.ei = null;
+  populateHeroEI();
+});
+heroEI.addEventListener('change', () => {
+  state.hero.ei = parseInt(heroEI.value);
   updateHeroInfo();
 });
 
@@ -668,7 +753,7 @@ addBtn.addEventListener('click', addComparison);
 
 function addComparison() {
   const defaultId = state.hero.cameraId === 'venice2_86k' ? 'alexa35' : 'venice2_86k';
-  const comp = { uid: ++compIdCounter, cameraId: defaultId, profileIdx: 0, isoIdx: 0 };
+  const comp = { uid: ++compIdCounter, cameraId: defaultId, profileIdx: 0, baseIsoIdx: 0, ei: null };
   state.comparisons.push(comp);
   renderComparisons();
   render();
@@ -714,9 +799,17 @@ function renderComparisons() {
       profOptions += `<option value="${i}" ${i === comp.profileIdx ? 'selected' : ''}>${p.name}</option>`;
     });
 
+    const baseISO = prof.baseISOs[comp.baseIsoIdx] || prof.baseISOs[0];
     let isoOptions = '';
     prof.baseISOs.forEach((iso, i) => {
-      isoOptions += `<option value="${i}" ${i === comp.isoIdx ? 'selected' : ''}>ISO ${iso}</option>`;
+      isoOptions += `<option value="${i}" ${i === comp.baseIsoIdx ? 'selected' : ''}>ISO ${iso}</option>`;
+    });
+
+    const eiRange = generateEIRange(baseISO);
+    const currentEI = comp.ei || baseISO;
+    let eiOptions = '';
+    eiRange.forEach(ei => {
+      eiOptions += `<option value="${ei}" ${ei === currentEI ? 'selected' : ''}>EI ${ei}${ei === baseISO ? ' (base)' : ''}</option>`;
     });
 
     card.innerHTML = `
@@ -727,20 +820,25 @@ function renderComparisons() {
       <div class="form-group"><label>Camera</label><select class="comp-cam-sel">${camOptions}</select></div>
       <div class="form-group"><label>Profile</label><select class="comp-prof-sel">${profOptions}</select></div>
       <div class="form-group"><label>Base ISO</label><select class="comp-iso-sel">${isoOptions}</select></div>
+      <div class="form-group"><label>EI</label><select class="comp-ei-sel">${eiOptions}</select></div>
     `;
 
     // Events
     card.querySelector('.comp-remove').addEventListener('click', () => removeComparison(comp.uid));
     card.querySelector('.comp-cam-sel').addEventListener('change', (e) => {
-      comp.cameraId = e.target.value; comp.profileIdx = 0; comp.isoIdx = 0;
+      comp.cameraId = e.target.value; comp.profileIdx = 0; comp.baseIsoIdx = 0; comp.ei = null;
       renderComparisons(); render();
     });
     card.querySelector('.comp-prof-sel').addEventListener('change', (e) => {
-      comp.profileIdx = parseInt(e.target.value); comp.isoIdx = 0;
+      comp.profileIdx = parseInt(e.target.value); comp.baseIsoIdx = 0; comp.ei = null;
       renderComparisons(); render();
     });
     card.querySelector('.comp-iso-sel').addEventListener('change', (e) => {
-      comp.isoIdx = parseInt(e.target.value); render();
+      comp.baseIsoIdx = parseInt(e.target.value); comp.ei = null;
+      renderComparisons(); render();
+    });
+    card.querySelector('.comp-ei-sel').addEventListener('change', (e) => {
+      comp.ei = parseInt(e.target.value); render();
     });
 
     compList.appendChild(card);
@@ -1027,7 +1125,8 @@ function updateResults() {
   resultsBody.innerHTML = state.comparisons.map(comp => {
     const cam = getCam(comp.cameraId);
     const prof = getProfile(cam, comp.profileIdx);
-    const iso = prof.baseISOs[comp.isoIdx] || prof.baseISOs[0];
+    const { baseISO, ei } = getBaseAndEI(comp, prof);
+    const drAtEI = getDRAtEI(prof.dr, baseISO, ei);
     const compGrey = prof.middleGrey;
     const diff = stopDiff(heroGrey, compGrey);
     const diffClass = Math.abs(diff) < 0.1 ? 'neutral' : (diff > 0 ? 'positive' : 'negative');
@@ -1057,8 +1156,9 @@ function updateResults() {
         <span class="result-brand-name">${cam.brand}</span>
       </div>
       <div class="result-details">
-        <div class="result-camera-name">${cam.model} · ${prof.name} · ISO ${iso}</div>
+        <div class="result-camera-name">${cam.model} · ${prof.name} · ISO ${baseISO} · EI ${ei}</div>
         <div class="stop-direction ${dirClass}"><span class="dir-arrow">${dirArrow}</span> ${dirLabel}</div>
+        ${drBarHTML(drAtEI)}
         <div class="result-metrics">
           <div class="result-metric">
             <span class="result-metric-label">Middle Grey</span>
@@ -1188,7 +1288,8 @@ function renderCompactBars() {
   const heroCam = getCam(state.hero.cameraId);
   const hProf = getProfile(heroCam, state.hero.profileIdx);
   const heroGrey = hProf.middleGrey;
-  const heroISO = hProf.baseISOs[state.hero.isoIdx] || hProf.baseISOs[0];
+  const { baseISO: heroBaseISO, ei: heroEI } = getBaseAndEI(state.hero, hProf);
+  const heroDRAtEI = getDRAtEI(hProf.dr, heroBaseISO, heroEI);
   const ir = ireRange();
   const heroExpanded = expandedTiles.has('hero');
 
@@ -1199,33 +1300,41 @@ function renderCompactBars() {
   });
   let heroISOOpts = '';
   hProf.baseISOs.forEach((iso, i) => {
-    heroISOOpts += `<option value="${i}" ${i === state.hero.isoIdx ? 'selected' : ''}>ISO ${iso}</option>`;
+    heroISOOpts += `<option value="${i}" ${i === state.hero.baseIsoIdx ? 'selected' : ''}>ISO ${iso}</option>`;
   });
-  const dr = hProf.dr;
-  const drText = dr.total ? dr.total + ' stops' : '—';
-  const splitText = (dr.above && dr.below) ? `${dr.above} / ${dr.below}` : '—';
+  const heroEIRange = generateEIRange(heroBaseISO);
+  let heroEIOpts = '';
+  heroEIRange.forEach(ei => {
+    heroEIOpts += `<option value="${ei}" ${ei === heroEI ? 'selected' : ''}>EI ${ei}${ei === heroBaseISO ? ' (base)' : ''}</option>`;
+  });
+
+  const heroEIShift = Math.log2(heroEI / heroBaseISO);
+  const heroEILabel = heroEIShift === 0 ? '' : ` · EI ${heroEI}`;
 
   let html = `<div class="tile is-hero ${heroExpanded ? 'expanded' : ''}" data-tile-id="hero">
     <div class="tile-summary" data-toggle="hero">
       <div class="tile-dot" style="background:${heroCam.color};color:${heroCam.color}"></div>
       <div class="tile-info">
         <div class="tile-cam-name">${heroCam.model}</div>
-        <div class="tile-cam-sub">${hProf.name} · ISO ${heroISO} · Reference</div>
+        <div class="tile-cam-sub">${hProf.name} · ISO ${heroBaseISO}${heroEILabel} · Reference</div>
+        ${miniDrBarHTML(heroDRAtEI)}
       </div>
       <span class="tile-ire-pill ref">${heroGrey}%</span>
       ${chevronSVG()}
     </div>
     <div class="tile-body">
       <div class="tile-body-inner">
+        ${drBarHTML(heroDRAtEI)}
         <div class="tile-selectors">
           <div class="form-group"><label>Camera</label><select class="hero-cam-sel">${camOptionsHTML(state.hero.cameraId)}</select></div>
           <div class="form-group"><label>Profile</label><select class="hero-prof-sel">${heroProfileOpts}</select></div>
-          <div class="form-group"><label>ISO</label><select class="hero-iso-sel">${heroISOOpts}</select></div>
+          <div class="form-group"><label>Base ISO</label><select class="hero-iso-sel">${heroISOOpts}</select></div>
+          <div class="form-group"><label>EI</label><select class="hero-ei-sel">${heroEIOpts}</select></div>
         </div>
         <div class="tile-details tile-hero-info">
           <div class="tile-detail-row"><span class="tile-detail-label">Middle Grey</span><span class="tile-detail-value" style="color:var(--accent)">${heroGrey}% IRE</span></div>
-          <div class="tile-detail-row"><span class="tile-detail-label">Dynamic Range</span><span class="tile-detail-value">${drText}</span></div>
-          <div class="tile-detail-row"><span class="tile-detail-label">DR Split</span><span class="tile-detail-value">${splitText}</span></div>
+          <div class="tile-detail-row"><span class="tile-detail-label">Dynamic Range</span><span class="tile-detail-value">${heroDRAtEI.total} stops</span></div>
+          <div class="tile-detail-row"><span class="tile-detail-label">DR Split at EI</span><span class="tile-detail-value">${heroDRAtEI.above} above / ${heroDRAtEI.below} below</span></div>
           <div class="tile-detail-row"><span class="tile-detail-label">Segment</span><span class="tile-detail-value">${heroCam.segment}</span></div>
         </div>
       </div>
@@ -1237,7 +1346,8 @@ function renderCompactBars() {
     const cam = getCam(comp.cameraId);
     const prof = getProfile(cam, comp.profileIdx);
     const compGrey = prof.middleGrey;
-    const compISO = prof.baseISOs[comp.isoIdx] || prof.baseISOs[0];
+    const { baseISO: compBaseISO, ei: compEI } = getBaseAndEI(comp, prof);
+    const compDRAtEI = getDRAtEI(prof.dr, compBaseISO, compEI);
     const diff = stopDiff(heroGrey, compGrey);
     const di = dirInfo(diff);
     const isExpanded = expandedTiles.has(comp.uid);
@@ -1247,14 +1357,21 @@ function renderCompactBars() {
     let profOpts = '';
     cam.profiles.forEach((p, i) => { profOpts += `<option value="${i}" ${i === comp.profileIdx ? 'selected' : ''}>${p.name}</option>`; });
     let isoOpts = '';
-    prof.baseISOs.forEach((iso, i) => { isoOpts += `<option value="${i}" ${i === comp.isoIdx ? 'selected' : ''}>ISO ${iso}</option>`; });
+    prof.baseISOs.forEach((iso, i) => { isoOpts += `<option value="${i}" ${i === comp.baseIsoIdx ? 'selected' : ''}>ISO ${iso}</option>`; });
+    const compEIRange = generateEIRange(compBaseISO);
+    let eiOpts = '';
+    compEIRange.forEach(ei => { eiOpts += `<option value="${ei}" ${ei === compEI ? 'selected' : ''}>EI ${ei}${ei === compBaseISO ? ' (base)' : ''}</option>`; });
+
+    const compEIShift = Math.log2(compEI / compBaseISO);
+    const compEILabel = compEIShift === 0 ? '' : ` · EI ${compEI}`;
 
     html += `<div class="tile ${isExpanded ? 'expanded' : ''}" data-tile-id="${comp.uid}" data-uid="${comp.uid}">
       <div class="tile-summary" data-toggle="${comp.uid}">
         <div class="tile-dot" style="background:${cam.color};color:${cam.color}"></div>
         <div class="tile-info">
           <div class="tile-cam-name">${cam.model}</div>
-          <div class="tile-cam-sub">${prof.name} · ISO ${compISO}</div>
+          <div class="tile-cam-sub">${prof.name} · ISO ${compBaseISO}${compEILabel}</div>
+          ${miniDrBarHTML(compDRAtEI)}
         </div>
         <span class="tile-ire-pill" style="color:${cam.color};border-color:${cam.color}44;background:${cam.color}11">${compGrey}%</span>
         ${chevronSVG()}
@@ -1269,11 +1386,12 @@ function renderCompactBars() {
           <div class="tile-full-bar" style="margin-bottom:22px">
             ${buildBarHTML(heroGrey, compGrey, heroCam.color, cam.color, ir)}
           </div>
+          ${drBarHTML(compDRAtEI)}
           <div class="tile-details">
             <div class="tile-detail-row"><span class="tile-detail-label">Middle Grey</span><span class="tile-detail-value" style="color:${cam.color}">${compGrey}% IRE</span></div>
             <div class="tile-detail-row"><span class="tile-detail-label">vs Hero</span><span class="tile-detail-value ${diff > 0.05 ? 'negative' : diff < -0.05 ? 'positive' : ''}">${ireDeltaStr}% IRE</span></div>
             <div class="tile-detail-row"><span class="tile-detail-label">Stop Offset</span><span class="tile-detail-value ${diff > 0.05 ? 'negative' : diff < -0.05 ? 'positive' : ''}">${formatStops(diff)} stops</span></div>
-            <div class="tile-detail-row"><span class="tile-detail-label">Dynamic Range</span><span class="tile-detail-value">${prof.dr.total || '—'} stops</span></div>
+            <div class="tile-detail-row"><span class="tile-detail-label">DR at EI</span><span class="tile-detail-value">${compDRAtEI.above} above / ${compDRAtEI.below} below</span></div>
           </div>
           <div class="tile-recs" data-recs-uid="${comp.uid}">
             <div class="tile-recs-header">Adjustment Details ${smallChevronSVG()}</div>
@@ -1287,7 +1405,8 @@ function renderCompactBars() {
           <div class="tile-selectors">
             <div class="form-group"><label>Camera</label><select class="comp-cam-sel">${camOptionsHTML(comp.cameraId)}</select></div>
             <div class="form-group"><label>Profile</label><select class="comp-prof-sel">${profOpts}</select></div>
-            <div class="form-group"><label>ISO</label><select class="comp-iso-sel">${isoOpts}</select></div>
+            <div class="form-group"><label>Base ISO</label><select class="comp-iso-sel">${isoOpts}</select></div>
+            <div class="form-group"><label>EI</label><select class="comp-ei-sel">${eiOpts}</select></div>
           </div>
           <div class="tile-remove-row"><button class="tile-remove-btn" data-uid="${comp.uid}">Remove Camera</button></div>
         </div>
@@ -1315,16 +1434,21 @@ function wireCompactEvents() {
   const heroCamSel = compactBody.querySelector('.hero-cam-sel');
   const heroProfSel = compactBody.querySelector('.hero-prof-sel');
   const heroIsoSel = compactBody.querySelector('.hero-iso-sel');
+  const heroEISel = compactBody.querySelector('.hero-ei-sel');
   if (heroCamSel) heroCamSel.addEventListener('change', e => {
-    state.hero.cameraId = e.target.value; state.hero.profileIdx = 0; state.hero.isoIdx = 0;
+    state.hero.cameraId = e.target.value; state.hero.profileIdx = 0; state.hero.baseIsoIdx = 0; state.hero.ei = null;
     populateHeroProfiles(); renderCompactBars();
   });
   if (heroProfSel) heroProfSel.addEventListener('change', e => {
-    state.hero.profileIdx = parseInt(e.target.value); state.hero.isoIdx = 0;
+    state.hero.profileIdx = parseInt(e.target.value); state.hero.baseIsoIdx = 0; state.hero.ei = null;
     populateHeroISO(); renderCompactBars();
   });
   if (heroIsoSel) heroIsoSel.addEventListener('change', e => {
-    state.hero.isoIdx = parseInt(e.target.value);
+    state.hero.baseIsoIdx = parseInt(e.target.value); state.hero.ei = null;
+    populateHeroEI();
+  });
+  if (heroEISel) heroEISel.addEventListener('change', e => {
+    state.hero.ei = parseInt(e.target.value);
     updateHeroInfo();
   });
 
@@ -1337,17 +1461,22 @@ function wireCompactEvents() {
     const camSel = tile.querySelector('.comp-cam-sel');
     const profSel = tile.querySelector('.comp-prof-sel');
     const isoSel = tile.querySelector('.comp-iso-sel');
+    const eiSel = tile.querySelector('.comp-ei-sel');
 
     if (camSel) camSel.addEventListener('change', e => {
-      comp.cameraId = e.target.value; comp.profileIdx = 0; comp.isoIdx = 0;
+      comp.cameraId = e.target.value; comp.profileIdx = 0; comp.baseIsoIdx = 0; comp.ei = null;
       renderComparisons(); render(); renderCompactBars();
     });
     if (profSel) profSel.addEventListener('change', e => {
-      comp.profileIdx = parseInt(e.target.value); comp.isoIdx = 0;
+      comp.profileIdx = parseInt(e.target.value); comp.baseIsoIdx = 0; comp.ei = null;
       renderComparisons(); render(); renderCompactBars();
     });
     if (isoSel) isoSel.addEventListener('change', e => {
-      comp.isoIdx = parseInt(e.target.value);
+      comp.baseIsoIdx = parseInt(e.target.value); comp.ei = null;
+      renderComparisons(); render(); renderCompactBars();
+    });
+    if (eiSel) eiSel.addEventListener('change', e => {
+      comp.ei = parseInt(e.target.value);
       renderComparisons(); render(); renderCompactBars();
     });
   });
