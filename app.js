@@ -584,14 +584,14 @@ function drBarHTML(drAtEI) {
   const belowPct = (drAtEI.below / drAtEI.total) * 100;
   return `<div class="dr-bar-wrapper">
     <div class="dr-bar-label-row">
-      <span class="dr-label-above">▲ ${drAtEI.above} stops above</span>
-      <span class="dr-label-total">${drAtEI.total} stops total</span>
       <span class="dr-label-below">▼ ${drAtEI.below} stops below</span>
+      <span class="dr-label-total">${drAtEI.total} stops total</span>
+      <span class="dr-label-above">▲ ${drAtEI.above} stops above</span>
     </div>
     <div class="dr-bar">
-      <div class="dr-bar-above" style="width:${abovePct}%"><span>${drAtEI.above}</span></div>
-      <div class="dr-bar-mid"></div>
       <div class="dr-bar-below" style="width:${belowPct}%"><span>${drAtEI.below}</span></div>
+      <div class="dr-bar-mid"></div>
+      <div class="dr-bar-above" style="width:${abovePct}%"><span>${drAtEI.above}</span></div>
     </div>
   </div>`;
 }
@@ -601,9 +601,9 @@ function miniDrBarHTML(drAtEI) {
   const abovePct = (drAtEI.above / drAtEI.total) * 100;
   const belowPct = (drAtEI.below / drAtEI.total) * 100;
   return `<div class="dr-bar-mini">
-    <div class="dr-bar-above" style="width:${abovePct}%"></div>
-    <div class="dr-bar-mid"></div>
     <div class="dr-bar-below" style="width:${belowPct}%"></div>
+    <div class="dr-bar-mid"></div>
+    <div class="dr-bar-above" style="width:${abovePct}%"></div>
   </div>`;
 }
 
