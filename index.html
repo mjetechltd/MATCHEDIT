@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MATCH[e]DIT — Middle Grey Comparator</title>
+  <meta name="description"
+    content="Compare middle grey IRE values across cinema cameras. Calculate stop offsets, EI bumps, and LUT adjustments for multi-camera shoots.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+  <header id="app-header">
+    <div class="header-left">
+      <h1 id="app-title">MATCH<span class="accent">[e]</span>DIT</h1>
+      <p class="subtitle">Middle Grey Comparator</p>
+    </div>
+    <div class="header-right">
+      <button id="view-toggle" class="btn btn-accent" title="Toggle compact view">
+        <svg id="toggle-icon-compact" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <rect x="5" y="2" width="14" height="20" rx="2" />
+          <line x1="12" y1="18" x2="12" y2="18.01" />
+        </svg>
+        <svg id="toggle-icon-desktop" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" style="display:none">
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        <span id="toggle-label">Compact</span>
+      </button>
+      <span class="badge">v1.0</span>
+    </div>
+  </header>
+
+  <main id="app-main">
+    <!-- Hero Camera Panel -->
+    <section id="hero-panel" class="panel">
+      <div class="panel-header">
+        <div class="panel-icon hero-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </div>
+        <h2>Hero Camera</h2>
+        <span class="panel-badge">REFERENCE</span>
+      </div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label for="hero-camera">Camera</label>
+          <select id="hero-camera"></select>
+        </div>
+        <div class="form-group">
+          <label for="hero-profile">Log Profile</label>
+          <select id="hero-profile"></select>
+        </div>
+        <div class="form-group">
+          <label for="hero-iso">Base ISO</label>
+          <select id="hero-iso"></select>
+        </div>
+        <div id="hero-info" class="camera-info"></div>
+      </div>
+    </section>
+
+    <!-- Visualization -->
+    <section id="viz-panel" class="panel viz">
+      <div class="panel-header">
+        <h2>IRE Scale</h2>
+        <div class="viz-legend" id="viz-legend"></div>
+      </div>
+      <div class="panel-body viz-body">
+        <canvas id="ire-canvas"></canvas>
+      </div>
+    </section>
+
+    <!-- Comparison Cameras Panel -->
+    <section id="comp-panel" class="panel">
+      <div class="panel-header">
+        <div class="panel-icon comp-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="8.5" cy="7" r="4" />
+            <line x1="20" y1="8" x2="20" y2="14" />
+            <line x1="23" y1="11" x2="17" y2="11" />
+          </svg>
+        </div>
+        <h2>Comparison Cameras</h2>
+        <button id="add-comp-btn" class="btn btn-accent" title="Add camera">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add
+        </button>
+      </div>
+      <div class="panel-body" id="comp-list">
+        <div class="empty-state" id="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+          <p>Add cameras to compare their middle grey placement against the hero</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Panel -->
+    <section id="results-panel" class="panel">
+      <div class="panel-header">
+        <h2>Offset Results</h2>
+      </div>
+      <div class="panel-body" id="results-body">
+        <div class="empty-state" id="results-empty">
+          <p>Add comparison cameras to see stop offsets, EI bumps, and LUT adjustments</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compact Bar View (replaces viz + results in compact mode) -->
+    <section id="compact-view-panel" class="panel compact-only" style="display:none">
+      <div class="panel-header">
+        <h2>Exposure Match</h2>
+        <button id="add-comp-btn-compact" class="btn btn-accent btn-sm" title="Add camera">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add
+        </button>
+      </div>
+      <div class="panel-body" id="compact-bars-body">
+        <!-- JS renders the bar cards here -->
+      </div>
+    </section>
+  </main>
+
+  <footer id="app-footer">
+    <p>Data sourced from manufacturer specifications &amp; CineD lab measurements&ensp;·&ensp;For reference only</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
