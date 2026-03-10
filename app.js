@@ -3,16 +3,20 @@
    ======================================================================== */
 
 // ── Camera Database ──
+// Sources: ARRI/Sony/RED/Canon/Panasonic/BMD/Nikon/DJI whitepapers, CineD lab measurements
 const CAMERAS = [
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ ARRI                                                            ║
+  // ╚══════════════════════════════════════════════════════════════════╝
   {
     id: 'alexa35', brand: 'ARRI', model: 'ALEXA 35', segment: 'Cinema',
     color: '#00d4aa',
     profiles: [{
       name: 'LogC4', middleGrey: 28,
       baseISOs: [200, 400, 800, 1600, 3200, 6400],
-      stopMap: [[-6, 10.16], [-5, 10.96], [-4, 12.38], [-3, 14.70], [-2, 18.11], [-1, 22.56], [0, 28], [1, 33.65], [2, 39.78], [3, 46.08], [4, 52.47], [5, 58.90], [6, 65.36], [7, 71.83], [8, 78.30], [9, 84.78], [10, 91.26]],
+      stopMap: [[-7, 7.5], [-6, 10.16], [-5, 10.96], [-4, 12.38], [-3, 14.70], [-2, 18.11], [-1, 22.56], [0, 28], [1, 33.65], [2, 39.78], [3, 46.08], [4, 52.47], [5, 58.90], [6, 65.36], [7, 71.83], [8, 78.30], [9, 84.78]],
       dr: { total: 17, above: 9.3, below: 7.7 },
-      notes: 'ALEV-4 sensor. DR split at EI 800.'
+      notes: 'ALEV-4 sensor. LogC4 lowers mid-grey to 28% for extra highlight headroom. 1.5 stops more highlights + 1 stop more shadows vs ALEXA Mini LF.'
     }]
   },
   {
@@ -21,20 +25,138 @@ const CAMERAS = [
     profiles: [{
       name: 'LogC3', middleGrey: 39,
       baseISOs: [200, 400, 800, 1600, 3200],
-      stopMap: [[-6, 8], [-5, 10], [-4, 13], [-3, 17], [-2, 22], [-1, 30], [0, 39], [1, 48], [2, 56], [3, 64], [4, 71], [5, 77], [6, 83]],
+      stopMap: [[-7, 5], [-6, 8], [-5, 10], [-4, 13], [-3, 17], [-2, 22], [-1, 30], [0, 39], [1, 48], [2, 56], [3, 64], [4, 71], [5, 77], [6, 83]],
       dr: { total: 14.5, above: 7.6, below: 6.9 },
-      notes: 'ALEV-3 sensor. DR split at EI 800.'
+      notes: 'ALEV-3 LF sensor. LogC3 places mid-grey higher at 39%. DR split at EI 800.'
     }]
   },
   {
-    id: 'venice2', brand: 'Sony', model: 'VENICE 2 (8.6K)', segment: 'Cinema',
+    id: 'alexamini', brand: 'ARRI', model: 'ALEXA Mini', segment: 'Cinema',
+    color: '#00d4aa',
+    profiles: [{
+      name: 'LogC3', middleGrey: 39,
+      baseISOs: [200, 400, 800, 1600, 3200],
+      stopMap: [[-7, 5], [-6, 8], [-5, 10], [-4, 13], [-3, 17], [-2, 22], [-1, 30], [0, 39], [1, 48], [2, 56], [3, 64], [4, 71], [5, 77], [6, 83]],
+      dr: { total: 14, above: 7, below: 7 },
+      notes: 'ALEV-3 S35 sensor. Same LogC3 curve as Mini LF. CineD: ~14 stops. Workhorse cinema camera.'
+    }]
+  },
+  {
+    id: 'alexaclassic', brand: 'ARRI', model: 'ALEXA Classic / SXT', segment: 'Cinema',
+    color: '#00d4aa',
+    profiles: [{
+      name: 'LogC3', middleGrey: 39,
+      baseISOs: [200, 400, 800, 1600, 3200],
+      stopMap: [[-7, 5], [-6, 8], [-5, 10], [-4, 13], [-3, 17], [-2, 22], [-1, 30], [0, 39], [1, 48], [2, 56], [3, 64], [4, 71], [5, 77], [6, 83]],
+      dr: { total: 14, above: 7, below: 7 },
+      notes: 'Original ALEV-3 sensor. The benchmark cinema camera. DR split at EI 800.'
+    }]
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ Sony                                                            ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  {
+    id: 'venice2_86k', brand: 'Sony', model: 'VENICE 2 (8.6K)', segment: 'Cinema',
+    color: '#4d8bff',
+    profiles: [{
+      name: 'S-Log3', middleGrey: 41,
+      baseISOs: [800, 3200],
+      stopMap: [[-8, 3.5], [-6, 5.93], [-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37], [6, 75.68]],
+      dr: { total: 16, above: 6, below: 10 },
+      notes: '8.6K FF sensor. Dual base ISO 800/3200. Sony states 16 stops. CineD: 12.9 at SNR=1. DR heavily weighted to shadows.'
+    }]
+  },
+  {
+    id: 'venice1', brand: 'Sony', model: 'VENICE (6K)', segment: 'Cinema',
     color: '#4d8bff',
     profiles: [{
       name: 'S-Log3', middleGrey: 41,
       baseISOs: [500, 2500],
-      stopMap: [[-6, 5.93], [-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37], [6, 75.68]],
+      stopMap: [[-8, 3.5], [-6, 5.93], [-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37], [6, 75.68]],
+      dr: { total: 15, above: 6, below: 9 },
+      notes: '6K FF sensor. Dual base ISO 500/2500. Same S-Log3 curve, slightly less DR than V2.'
+    }]
+  },
+  {
+    id: 'burano', brand: 'Sony', model: 'BURANO', segment: 'Cinema',
+    color: '#4d8bff',
+    profiles: [{
+      name: 'S-Log3', middleGrey: 41,
+      baseISOs: [800, 3200],
+      stopMap: [[-8, 3.5], [-6, 5.93], [-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37], [6, 75.68]],
       dr: { total: 16, above: 6, below: 10 },
-      notes: 'Dual base ISO. DR split at ISO 3200.'
+      notes: 'Same sensor as VENICE 2 8.6K. Dual base 800/3200. CineD: 14.2 at SNR=1, 13.1 at SNR=2.'
+    }]
+  },
+  {
+    id: 'fx9', brand: 'Sony', model: 'FX9', segment: 'Cinema',
+    color: '#4d8bff',
+    profiles: [{
+      name: 'S-Log3', middleGrey: 41,
+      baseISOs: [800, 4000],
+      stopMap: [[-7, 4.5], [-6, 5.93], [-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37], [6, 75.68]],
+      dr: { total: 15, above: 6, below: 9 },
+      notes: 'FF sensor. Dual base 800/4000. ~15 stops claimed. Excellent S-Cinetone & S-Log3.'
+    }]
+  },
+  {
+    id: 'fx6', brand: 'Sony', model: 'FX6', segment: 'Prosumer',
+    color: '#4d8bff',
+    profiles: [{
+      name: 'S-Log3', middleGrey: 41,
+      baseISOs: [800, 12800],
+      stopMap: [[-6, 5.93], [-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37], [6, 75.68]],
+      dr: { total: 15, above: 6, below: 9 },
+      notes: 'FF sensor. Dual base 800/12800. CineD: ~12.5 stops at SNR=2. Sony claims 15+ stops.'
+    }]
+  },
+  {
+    id: 'fx3', brand: 'Sony', model: 'FX3 / a7S III', segment: 'Prosumer',
+    color: '#4d8bff',
+    profiles: [{
+      name: 'S-Log3', middleGrey: 41,
+      baseISOs: [640, 12800],
+      stopMap: [[-6, 5.93], [-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37], [6, 75.68]],
+      dr: { total: 15, above: 6, below: 9 },
+      notes: '12MP FF. Dual base 640/12800. CineD: 12.4 stops at SNR=2. Exceptional low-light.'
+    }]
+  },
+  {
+    id: 'a7iv', brand: 'Sony', model: 'a7 IV', segment: 'Prosumer',
+    color: '#4d8bff',
+    profiles: [{
+      name: 'S-Log3', middleGrey: 41,
+      baseISOs: [800, 12800],
+      stopMap: [[-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37]],
+      dr: { total: 15, above: 6, below: 9 },
+      notes: '33MP FF. Dual base 800/12800. Less S-Log3 latitude than a7S III due to higher pixel count.'
+    }]
+  },
+  {
+    id: 'a7cr', brand: 'Sony', model: 'a7C II / a7CR', segment: 'Prosumer',
+    color: '#4d8bff',
+    profiles: [{
+      name: 'S-Log3', middleGrey: 41,
+      baseISOs: [800, 12800],
+      stopMap: [[-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37]],
+      dr: { total: 15, above: 6, below: 9 },
+      notes: 'Compact FF. Same sensor as a7 IV / a7R V. Dual base 800/12800. S-Log3 at 41%.'
+    }]
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ RED                                                             ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  {
+    id: 'vraptorx', brand: 'RED', model: 'V-RAPTOR [X]', segment: 'Cinema',
+    color: '#ff3b3b',
+    profiles: [{
+      name: 'Log3G10', middleGrey: 33.33,
+      baseISOs: [320, 640, 800, 1600, 3200, 6400],
+      stopMap: [[-7, 9], [-6, 10.70], [-5, 12.03], [-4, 14.24], [-3, 17.57], [-2, 21.87], [-1, 27.04], [0, 33.33], [1, 40.60], [2, 48.65], [3, 57.07], [4, 65.63], [5, 74.19], [6, 82.63], [7, 89], [8, 93.25]],
+      dr: { total: 17, above: 8, below: 9 },
+      notes: 'Global shutter VV sensor. 17+ stops claimed by RED. Log3G10 maps 10 stops above mid-grey to 1.0.'
     }]
   },
   {
@@ -43,95 +165,358 @@ const CAMERAS = [
     profiles: [{
       name: 'Log3G10', middleGrey: 33.33,
       baseISOs: [250, 400, 800, 1600, 3200, 6400],
-      stopMap: [[-6, 10.70], [-5, 12.03], [-4, 14.24], [-3, 17.57], [-2, 21.87], [-1, 27.04], [0, 33.33], [1, 40.60], [2, 48.65], [3, 57.07], [4, 65.63], [5, 74.19], [6, 82.63], [7, 86.50], [8, 93.25], [9, 100]],
-      dr: { total: 13.4, above: null, below: null },
-      notes: '18% grey = 1/3. 10 stops above maps to 1.0. CineD measured ~13.4 stops SNR=2.'
+      stopMap: [[-7, 9], [-6, 10.70], [-5, 12.03], [-4, 14.24], [-3, 17.57], [-2, 21.87], [-1, 27.04], [0, 33.33], [1, 40.60], [2, 48.65], [3, 57.07], [4, 65.63], [5, 74.19], [6, 82.63], [7, 89], [8, 93.25]],
+      dr: { total: 17, above: 8, below: 9 },
+      notes: 'Rolling shutter VV sensor. 17+ stops claimed. CineD: ~13.4 stops at SNR=2.'
     }]
+  },
+  {
+    id: 'monstro', brand: 'RED', model: 'DSMC2 Monstro 8K VV', segment: 'Cinema',
+    color: '#ff3b3b',
+    profiles: [{
+      name: 'Log3G10', middleGrey: 33.33,
+      baseISOs: [250, 400, 800, 1600, 3200],
+      stopMap: [[-6, 10.70], [-5, 12.03], [-4, 14.24], [-3, 17.57], [-2, 21.87], [-1, 27.04], [0, 33.33], [1, 40.60], [2, 48.65], [3, 57.07], [4, 65.63], [5, 74.19], [6, 82.63], [7, 89]],
+      dr: { total: 16.5, above: 7, below: 9.5 },
+      notes: 'VV sensor. 16.5+ stops. Same Log3G10 encoding. Mid-grey at 33%.'
+    }]
+  },
+  {
+    id: 'helium', brand: 'RED', model: 'DSMC2 Helium 8K S35', segment: 'Cinema',
+    color: '#ff3b3b',
+    profiles: [{
+      name: 'Log3G10', middleGrey: 33.33,
+      baseISOs: [250, 400, 800, 1600, 3200],
+      stopMap: [[-6, 10.70], [-5, 12.03], [-4, 14.24], [-3, 17.57], [-2, 21.87], [-1, 27.04], [0, 33.33], [1, 40.60], [2, 48.65], [3, 57.07], [4, 65.63], [5, 74.19], [6, 82.63], [7, 89]],
+      dr: { total: 16.5, above: 7, below: 9.5 },
+      notes: 'S35 sensor. 16.5+ stops claimed. Widely used in features.'
+    }]
+  },
+  {
+    id: 'komodo', brand: 'RED', model: 'KOMODO 6K', segment: 'Cinema',
+    color: '#ff3b3b',
+    profiles: [{
+      name: 'Log3G10', middleGrey: 33.33,
+      baseISOs: [250, 400, 800, 1600, 3200, 6400, 12800],
+      stopMap: [[-6, 10.70], [-5, 12.03], [-4, 14.24], [-3, 17.57], [-2, 21.87], [-1, 27.04], [0, 33.33], [1, 40.60], [2, 48.65], [3, 57.07], [4, 65.63], [5, 74.19], [6, 82.63]],
+      dr: { total: 16, above: 7, below: 9 },
+      notes: 'Global shutter S35. 16+ stops. Same Log3G10 mid-grey at 33%. Very compact body.'
+    }]
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ Canon                                                           ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  {
+    id: 'c500ii', brand: 'Canon', model: 'EOS C500 Mark II', segment: 'Cinema',
+    color: '#e85d3a',
+    profiles: [
+      {
+        name: 'Canon Log2', middleGrey: 40,
+        baseISOs: [800, 1600, 3200, 6400],
+        stopMap: [[-6, 12], [-5, 14], [-4, 17], [-3, 22], [-2, 28], [-1, 34], [0, 40], [1, 45], [2, 50], [3, 54], [4, 57], [5, 59]],
+        dr: { total: 15, above: 5, below: 10 },
+        notes: '5.9K FF. Base ISO 800. CineD: 13.1 stops at SNR=2. Canon Log2 for max DR.'
+      },
+      {
+        name: 'Canon Log3', middleGrey: 35,
+        baseISOs: [800, 1600, 3200, 6400],
+        stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 35], [1, 39], [2, 43], [3, 46], [4, 49], [5, 50]],
+        dr: { total: 14, above: 5, below: 9 },
+        notes: 'Canon Log3: easier to grade, cleaner shadows, slightly less DR than Log2.'
+      }
+    ]
+  },
+  {
+    id: 'c300iii', brand: 'Canon', model: 'EOS C300 Mark III', segment: 'Cinema',
+    color: '#e85d3a',
+    profiles: [
+      {
+        name: 'Canon Log2', middleGrey: 40,
+        baseISOs: [800, 1600, 3200],
+        stopMap: [[-7, 10], [-6, 12], [-5, 14], [-4, 17], [-3, 22], [-2, 28], [-1, 34], [0, 40], [1, 45], [2, 50], [3, 54], [4, 57], [5, 59], [6, 60]],
+        dr: { total: 16, above: 6, below: 10 },
+        notes: 'S35 DGO sensor. 16+ stops with Canon Log2. DGO reads each pixel at two gains for exceptional DR.'
+      },
+      {
+        name: 'Canon Log3', middleGrey: 35,
+        baseISOs: [800, 1600, 3200],
+        stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 35], [1, 39], [2, 43], [3, 46], [4, 49], [5, 50]],
+        dr: { total: 14, above: 5, below: 9 },
+        notes: 'DGO sensor with Canon Log3. Cleaner noise floor than Log2.'
+      }
+    ]
+  },
+  {
+    id: 'c70', brand: 'Canon', model: 'EOS C70', segment: 'Cinema',
+    color: '#e85d3a',
+    profiles: [
+      {
+        name: 'Canon Log2', middleGrey: 40,
+        baseISOs: [800, 1600, 3200],
+        stopMap: [[-7, 10], [-6, 12], [-5, 14], [-4, 17], [-3, 22], [-2, 28], [-1, 34], [0, 40], [1, 45], [2, 50], [3, 54], [4, 57], [5, 59], [6, 60]],
+        dr: { total: 16, above: 6, below: 10 },
+        notes: 'S35 DGO sensor (same as C300 III). 16+ stops with Canon Log2. RF mount.'
+      },
+      {
+        name: 'Canon Log3', middleGrey: 35,
+        baseISOs: [800, 1600, 3200],
+        stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 35], [1, 39], [2, 43], [3, 46], [4, 49], [5, 50]],
+        dr: { total: 14, above: 5, below: 9 },
+        notes: 'Canon Log3 on DGO. Easier to grade, less highlight room.'
+      }
+    ]
+  },
+  {
+    id: 'c80', brand: 'Canon', model: 'EOS C80', segment: 'Cinema',
+    color: '#e85d3a',
+    profiles: [
+      {
+        name: 'Canon Log2', middleGrey: 40,
+        baseISOs: [800, 3200],
+        stopMap: [[-6, 12], [-5, 14], [-4, 17], [-3, 22], [-2, 28], [-1, 34], [0, 40], [1, 45], [2, 50], [3, 54], [4, 57], [5, 59]],
+        dr: { total: 16, above: 6, below: 10 },
+        notes: '6K FF sensor. Dual base 800/3200. Cinema RAW Light internal. RF mount cinema body.'
+      },
+      {
+        name: 'Canon Log3', middleGrey: 35,
+        baseISOs: [800, 3200],
+        stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 35], [1, 39], [2, 43], [3, 46], [4, 49], [5, 50]],
+        dr: { total: 14, above: 5, below: 9 },
+        notes: 'Canon Log3 on FF sensor. Clean shadows.'
+      }
+    ]
   },
   {
     id: 'c700', brand: 'Canon', model: 'EOS C700', segment: 'Cinema',
     color: '#e85d3a',
     profiles: [
       {
-        name: 'Canon Log2', middleGrey: 39.8,
+        name: 'Canon Log2', middleGrey: 40,
         baseISOs: [160, 400, 800, 1600, 3200],
-        stopMap: [[-5, 14], [-4, 17], [-3, 22], [-2, 28], [-1, 34], [0, 39.8], [1, 45], [2, 50], [3, 54], [4, 57], [5, 59]],
-        dr: { total: 15, above: null, below: null },
-        notes: '15-stop class per Canon HDR docs. Full-range code %.'
+        stopMap: [[-5, 14], [-4, 17], [-3, 22], [-2, 28], [-1, 34], [0, 40], [1, 45], [2, 50], [3, 54], [4, 57], [5, 59]],
+        dr: { total: 15, above: 5, below: 10 },
+        notes: 'S35 & FF variants. 15 stops. Canon Log2 for max DR.'
       },
       {
-        name: 'Canon Log3', middleGrey: 34.3,
+        name: 'Canon Log3', middleGrey: 35,
         baseISOs: [160, 400, 800, 1600, 3200],
-        stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 34.3], [1, 39], [2, 43], [3, 46], [4, 49], [5, 50]],
-        dr: { total: 15, above: null, below: null },
-        notes: 'Full-range code %.'
+        stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 35], [1, 39], [2, 43], [3, 46], [4, 49], [5, 50]],
+        dr: { total: 14, above: 5, below: 9 },
+        notes: 'Canon Log3 for cleaner shadows and easier grading.'
       }
     ]
   },
   {
-    id: 'varicam', brand: 'Panasonic', model: 'VariCam / S1H', segment: 'Cinema',
+    id: 'r5', brand: 'Canon', model: 'EOS R5 / R5 II', segment: 'Prosumer',
+    color: '#e85d3a',
+    profiles: [
+      {
+        name: 'Canon Log3', middleGrey: 35,
+        baseISOs: [400, 800, 1600, 3200],
+        stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 35], [1, 39], [2, 44], [3, 48], [4, 51], [5, 53]],
+        dr: { total: 13, above: 5, below: 8 },
+        notes: '45MP FF. Base ISO 400. CineD: ~10.3-12 stops SNR=2. 8K RAW internal.'
+      },
+      {
+        name: 'Canon Log', middleGrey: 34.3,
+        baseISOs: [400, 800],
+        stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 34.3], [1, 39], [2, 44], [3, 48], [4, 51], [5, 53]],
+        dr: { total: 12, above: 5, below: 7 },
+        notes: 'Canon Log: original, slightly less DR than Log3.'
+      }
+    ]
+  },
+  {
+    id: 'r6ii', brand: 'Canon', model: 'EOS R6 Mark II', segment: 'Prosumer',
+    color: '#e85d3a',
+    profiles: [{
+      name: 'Canon Log3', middleGrey: 35,
+      baseISOs: [400, 800, 1600],
+      stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 35], [1, 39], [2, 44], [3, 48], [4, 51], [5, 53]],
+      dr: { total: 13, above: 5, below: 8 },
+      notes: '24MP FF. CineD: ~10.5 stops at SNR=2. 4K 60fps, oversampled.'
+    }]
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ Panasonic                                                       ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  {
+    id: 'varicamlt', brand: 'Panasonic', model: 'VariCam LT', segment: 'Cinema',
+    color: '#f0c040',
+    profiles: [{
+      name: 'V-Log', middleGrey: 42,
+      baseISOs: [800, 5000],
+      stopMap: [[-7, 5], [-6, 8], [-5, 11], [-4, 15], [-3, 21], [-2, 28], [-1, 35], [0, 42], [1, 48], [2, 53], [3, 57], [4, 60], [5, 61]],
+      dr: { total: 14, above: 5, below: 9 },
+      notes: 'S35 sensor. Dual native ISO 800/5000. 14 stops claimed. V-Log mid-grey at 42%.'
+    }]
+  },
+  {
+    id: 's1h', brand: 'Panasonic', model: 'Lumix S1H', segment: 'Prosumer',
     color: '#f0c040',
     profiles: [{
       name: 'V-Log', middleGrey: 42,
       baseISOs: [640, 4000],
       stopMap: [[-6, 8], [-5, 11], [-4, 15], [-3, 21], [-2, 28], [-1, 35], [0, 42], [1, 48], [2, 53], [3, 57], [4, 60], [5, 61]],
-      dr: { total: 12.7, above: null, below: null },
-      notes: 'Dual native ISO 640/4000. CineD: 12.7 stops SNR=2 at ISO640.'
+      dr: { total: 14, above: 5, below: 9 },
+      notes: 'FF sensor. Dual native 640/4000. CineD: 12.7 stops at SNR=2, 6K V-Log. 14+ claimed.'
     }]
   },
   {
-    id: 'bmpcc6k', brand: 'Blackmagic', model: 'BMPCC 6K / 6K Pro', segment: 'Prosumer',
+    id: 's5ii', brand: 'Panasonic', model: 'Lumix S5 II / S5 IIX', segment: 'Prosumer',
+    color: '#f0c040',
+    profiles: [{
+      name: 'V-Log', middleGrey: 42,
+      baseISOs: [640, 4000],
+      stopMap: [[-6, 8], [-5, 11], [-4, 15], [-3, 21], [-2, 28], [-1, 35], [0, 42], [1, 48], [2, 53], [3, 57], [4, 60], [5, 61]],
+      dr: { total: 14, above: 5, below: 9 },
+      notes: 'FF sensor w/ PDAF. Dual native 640/4000. CineD: ~12.5 stops at SNR=2. ProRes internal (S5 IIX).'
+    }]
+  },
+  {
+    id: 'gh6', brand: 'Panasonic', model: 'Lumix GH6', segment: 'Prosumer',
+    color: '#f0c040',
+    profiles: [{
+      name: 'V-Log', middleGrey: 42,
+      baseISOs: [500, 2000],
+      stopMap: [[-5, 11], [-4, 15], [-3, 21], [-2, 28], [-1, 35], [0, 42], [1, 48], [2, 53], [3, 57], [4, 60], [5, 61]],
+      dr: { total: 13, above: 5, below: 8 },
+      notes: 'MFT sensor. Dual native 500/2000. CineD: ~12 stops at SNR=2. 5.7K ProRes internal.'
+    }]
+  },
+  {
+    id: 'gh7', brand: 'Panasonic', model: 'Lumix GH7', segment: 'Prosumer',
+    color: '#f0c040',
+    profiles: [{
+      name: 'V-Log', middleGrey: 42,
+      baseISOs: [500, 2000],
+      stopMap: [[-5, 11], [-4, 15], [-3, 21], [-2, 28], [-1, 35], [0, 42], [1, 48], [2, 53], [3, 57], [4, 60], [5, 61]],
+      dr: { total: 13, above: 5, below: 8 },
+      notes: 'MFT sensor. Dual native 500/2000. Apple ProRes & BRAW internal. 32-bit float audio.'
+    }]
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ Blackmagic Design                                               ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  {
+    id: 'ursacine', brand: 'Blackmagic', model: 'URSA Cine 17K 65', segment: 'Cinema',
     color: '#a855f7',
     profiles: [{
-      name: 'BMD Film Gen5', middleGrey: 38.36,
-      baseISOs: [400, 3200],
-      stopMap: [[-6, 11.58], [-5, 13.89], [-4, 17.45], [-3, 22.25], [-2, 27.88], [-1, 33.68], [0, 38.36], [1, 42.28], [2, 45.73], [3, 48.87], [4, 51.79], [5, 54.55], [6, 57.22]],
-      dr: { total: 11.8, above: null, below: null },
-      notes: 'Dual native ISO 400/3200. CineD: 11.8 stops SNR=2 at ISO400 BRAW.'
+      name: 'BMD Film Gen5', middleGrey: 38.4,
+      baseISOs: [400, 800, 1600, 3200],
+      stopMap: [[-7, 8], [-6, 11.58], [-5, 13.89], [-4, 17.45], [-3, 22.25], [-2, 27.88], [-1, 33.68], [0, 38.36], [1, 42.28], [2, 45.73], [3, 48.87], [4, 51.79], [5, 54.55], [6, 57.22], [7, 59]],
+      dr: { total: 16, above: 7, below: 9 },
+      notes: '65mm RGBW sensor, 17K. 16 stops claimed. Gen5 film curve. BRAW internal.'
     }]
   },
   {
-    id: 'a7s3', brand: 'Sony', model: 'a7S III', segment: 'Prosumer',
-    color: '#4d8bff',
-    profiles: [{
-      name: 'S-Log3', middleGrey: 41,
-      baseISOs: [640, 12800],
-      stopMap: [[-6, 5.93], [-5, 8.09], [-4, 12.41], [-3, 20.36], [-2, 30.60], [-1, 35.83], [0, 41], [1, 45.37], [2, 50.10], [3, 54.83], [4, 59.58], [5, 64.37], [6, 75.68]],
-      dr: { total: 12.4, above: null, below: null },
-      notes: 'Dual base ISO. CineD: 12.4 stops SNR=2 at ISO640.'
-    }]
-  },
-  {
-    id: 'r5', brand: 'Canon', model: 'EOS R5', segment: 'Prosumer',
-    color: '#e85d3a',
-    profiles: [{
-      name: 'Canon Log', middleGrey: 34.3,
-      baseISOs: [400, 800],
-      stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 34.3], [1, 39], [2, 44], [3, 48], [4, 51], [5, 53]],
-      dr: { total: 10.3, above: null, below: null },
-      notes: 'CineD: 10.3 stops SNR=2 at ISO400 8K RAW.'
-    }]
-  },
-  {
-    id: 'r6', brand: 'Canon', model: 'EOS R6', segment: 'Prosumer',
-    color: '#e85d3a',
-    profiles: [{
-      name: 'Canon Log', middleGrey: 34.3,
-      baseISOs: [400, 800],
-      stopMap: [[-5, 14], [-4, 16], [-3, 20], [-2, 25], [-1, 30], [0, 34.3], [1, 39], [2, 44], [3, 48], [4, 51], [5, 53]],
-      dr: { total: 10.5, above: null, below: null },
-      notes: 'CineD: 10.5 stops SNR=2 at ISO400 UHD.'
-    }]
-  },
-  {
-    id: 'ursag2', brand: 'Blackmagic', model: 'URSA Mini Pro 4.6K G2', segment: 'Prosumer',
+    id: 'ursa12k', brand: 'Blackmagic', model: 'URSA Mini Pro 12K', segment: 'Cinema',
     color: '#a855f7',
     profiles: [{
-      name: 'BMD Film Gen5', middleGrey: 38.36,
+      name: 'BMD Film Gen5', middleGrey: 38.4,
+      baseISOs: [400, 800, 1600, 3200],
+      stopMap: [[-6, 11.58], [-5, 13.89], [-4, 17.45], [-3, 22.25], [-2, 27.88], [-1, 33.68], [0, 38.36], [1, 42.28], [2, 45.73], [3, 48.87], [4, 51.79], [5, 54.55], [6, 57.22]],
+      dr: { total: 14, above: 6, below: 8 },
+      notes: 'S35 12K. Native ISO 800. 14 stops. BRAW 12K internal.'
+    }]
+  },
+  {
+    id: 'ursag2', brand: 'Blackmagic', model: 'URSA Mini Pro 4.6K G2', segment: 'Cinema',
+    color: '#a855f7',
+    profiles: [{
+      name: 'BMD Film Gen5', middleGrey: 38.4,
       baseISOs: [400, 3200],
       stopMap: [[-6, 11.58], [-5, 13.89], [-4, 17.45], [-3, 22.25], [-2, 27.88], [-1, 33.68], [0, 38.36], [1, 42.28], [2, 45.73], [3, 48.87], [4, 51.79], [5, 54.55], [6, 57.22]],
-      dr: { total: 12.6, above: null, below: null },
-      notes: 'CineD: 12.6 stops SNR=2.'
+      dr: { total: 15, above: 6, below: 9 },
+      notes: 'S35 sensor. Dual native 400/3200. CineD: 12.6 stops at SNR=2. 15 stops claimed.'
+    }]
+  },
+  {
+    id: 'bmpcc6k', brand: 'Blackmagic', model: 'Pocket Cinema 6K G2 / Pro', segment: 'Prosumer',
+    color: '#a855f7',
+    profiles: [{
+      name: 'BMD Film Gen5', middleGrey: 38.4,
+      baseISOs: [400, 3200],
+      stopMap: [[-6, 11.58], [-5, 13.89], [-4, 17.45], [-3, 22.25], [-2, 27.88], [-1, 33.68], [0, 38.36], [1, 42.28], [2, 45.73], [3, 48.87], [4, 51.79], [5, 54.55], [6, 57.22]],
+      dr: { total: 13, above: 6, below: 7 },
+      notes: 'S35 sensor. Dual native 400/3200. CineD: 11.8 stops at SNR=2 BRAW. 13 claimed.'
+    }]
+  },
+  {
+    id: 'bmpcc4k', brand: 'Blackmagic', model: 'Pocket Cinema Camera 4K', segment: 'Prosumer',
+    color: '#a855f7',
+    profiles: [{
+      name: 'BMD Film Gen5', middleGrey: 38.4,
+      baseISOs: [400, 3200],
+      stopMap: [[-5, 13.89], [-4, 17.45], [-3, 22.25], [-2, 27.88], [-1, 33.68], [0, 38.36], [1, 42.28], [2, 45.73], [3, 48.87], [4, 51.79], [5, 54.55], [6, 57.22]],
+      dr: { total: 13, above: 6, below: 7 },
+      notes: 'MFT sensor. Dual native 400/3200. CineD: 11.6 stops at SNR=2. 13 claimed.'
+    }]
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ Nikon                                                           ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  {
+    id: 'z9', brand: 'Nikon', model: 'Z9', segment: 'Prosumer',
+    color: '#ffd700',
+    profiles: [{
+      name: 'N-Log', middleGrey: 35,
+      baseISOs: [800, 4000],
+      stopMap: [[-6, 8], [-5, 11], [-4, 15], [-3, 20], [-2, 26], [-1, 31], [0, 35], [1, 39], [2, 43], [3, 46], [4, 49], [5, 51]],
+      dr: { total: 14, above: 5, below: 9 },
+      notes: '46MP stacked FF. Dual base 800/4000. CineD: 12.9 stops at SNR=1, 11.6 at SNR=2. N-RAW 8K.'
+    }]
+  },
+  {
+    id: 'z8', brand: 'Nikon', model: 'Z8', segment: 'Prosumer',
+    color: '#ffd700',
+    profiles: [{
+      name: 'N-Log', middleGrey: 35,
+      baseISOs: [800, 4000],
+      stopMap: [[-6, 8], [-5, 11], [-4, 15], [-3, 20], [-2, 26], [-1, 31], [0, 35], [1, 39], [2, 43], [3, 46], [4, 49], [5, 51]],
+      dr: { total: 14, above: 5, below: 9 },
+      notes: 'Same sensor as Z9. Dual base 800/4000. N-RAW internal. Smaller body.'
+    }]
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ DJI                                                             ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  {
+    id: 'ronin4d', brand: 'DJI', model: 'Ronin 4D (X9-6K)', segment: 'Cinema',
+    color: '#00bcd4',
+    profiles: [{
+      name: 'D-Log', middleGrey: 42,
+      baseISOs: [800, 5000],
+      stopMap: [[-6, 9], [-5, 12], [-4, 16], [-3, 22], [-2, 28], [-1, 35], [0, 42], [1, 48], [2, 53], [3, 57], [4, 60], [5, 62]],
+      dr: { total: 14, above: 5, below: 9 },
+      notes: '6K FF integrated gimbal. Dual base 800/5000. CineD: 14.2 stops at SNR=1 (8K DRE). LiDAR AF.'
+    }]
+  },
+  {
+    id: 'ronin4d8k', brand: 'DJI', model: 'Ronin 4D (X9-8K)', segment: 'Cinema',
+    color: '#00bcd4',
+    profiles: [{
+      name: 'D-Log', middleGrey: 42,
+      baseISOs: [320, 800, 1600, 4000],
+      stopMap: [[-6, 9], [-5, 12], [-4, 16], [-3, 22], [-2, 28], [-1, 35], [0, 42], [1, 48], [2, 53], [3, 57], [4, 60], [5, 62]],
+      dr: { total: 14, above: 5, below: 9 },
+      notes: '8K FF. Base 800/4000 (DRE on) or 320/1600 (DRE off). DRE adds ~1 stop.'
+    }]
+  },
+  {
+    id: 'inspire3', brand: 'DJI', model: 'Inspire 3 (X9-8K Air)', segment: 'Cinema',
+    color: '#00bcd4',
+    profiles: [{
+      name: 'D-Log', middleGrey: 42,
+      baseISOs: [800, 4000],
+      stopMap: [[-6, 9], [-5, 12], [-4, 16], [-3, 22], [-2, 28], [-1, 35], [0, 42], [1, 48], [2, 53], [3, 57], [4, 60], [5, 62]],
+      dr: { total: 14, above: 5, below: 9 },
+      notes: '8K FF aerial cinema. EI 800/4000 ≤30fps, 320/1600 >30fps. CineD: 14.9 stops SNR=1, 11.6 SNR=2.'
     }]
   }
 ];
@@ -282,7 +667,7 @@ heroISO.addEventListener('change', () => {
 addBtn.addEventListener('click', addComparison);
 
 function addComparison() {
-  const defaultId = state.hero.cameraId === 'venice2' ? 'alexa35' : 'venice2';
+  const defaultId = state.hero.cameraId === 'venice2_86k' ? 'alexa35' : 'venice2_86k';
   const comp = { uid: ++compIdCounter, cameraId: defaultId, profileIdx: 0, isoIdx: 0 };
   state.comparisons.push(comp);
   renderComparisons();
